@@ -15,6 +15,8 @@ module tb_cheshire_soc;
   logic [1:0] preload_mode;
   bit [31:0]  exit_code;
 
+  localparam  UartBaudPeriod = fix.vip.UartBaudPeriod;
+
   initial begin
     // Fetch plusargs or use safe (fail-fast) defaults
     if (!$value$plusargs("BOOTMODE=%d", boot_mode))     boot_mode     = 0;
@@ -54,6 +56,9 @@ module tb_cheshire_soc;
       fix.vip.jtag_init();
       fix.vip.jtag_wait_for_eoc(exit_code);
     end
+
+    // Wait for the UART to finish reading the current byte
+    wait (fix.vip.uart_reading_byte == 0);
 
     $finish;
   end

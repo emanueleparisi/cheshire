@@ -37,11 +37,6 @@ $(BENDER_ROOT)/.chs_deps:
 	cd $(CHS_ROOT) && git submodule update --init --recursive sw/deps/printf
 	@touch $@
 
-# Make sure dependencies are more up-to-date than any targets run
-ifeq ($(shell test -f $(BENDER_ROOT)/.chs_deps && echo 1),)
--include $(BENDER_ROOT)/.chs_deps
-endif
-
 # Running this target will reset dependencies (without updating the checked-in Bender.lock)
 chs-clean-deps:
 	rm -rf .bender
@@ -76,11 +71,13 @@ $(CHS_ROOT)/hw/regs/cheshire_reg_pkg.sv $(CHS_ROOT)/hw/regs/cheshire_reg_top.sv:
 
 # CLINT
 CLINTCORES ?= 1
+$(CLINTROOT)/clint.mk: $(BENDER_ROOT)/.chs_deps
 include $(CLINTROOT)/clint.mk
 $(CLINTROOT)/.generated:
 	flock -x $@ $(MAKE) clint && touch $@
 
 # OpenTitan peripherals
+$(OTPROOT)/otp.mk: $(BENDER_ROOT)/.chs_deps
 include $(OTPROOT)/otp.mk
 $(OTPROOT)/.generated: $(CHS_ROOT)/hw/rv_plic.cfg.hjson
 	flock -x $@ sh -c "cp $< $(dir $@)/src/rv_plic/; $(MAKE) -j1 otp" && touch $@
@@ -88,11 +85,13 @@ $(OTPROOT)/.generated: $(CHS_ROOT)/hw/rv_plic.cfg.hjson
 # AXI RT
 AXIRT_NUM_MGRS ?= 8
 AXIRT_NUM_SUBS ?= 2
+$(AXIRTROOT)/axirt.mk: $(BENDER_ROOT)/.chs_deps
 include $(AXIRTROOT)/axirt.mk
 $(AXIRTROOT)/.generated: axirt_regs
 	touch $@
 
 # AXI VGA
+$(AXI_VGA_ROOT)/axi_vga.mk: $(BENDER_ROOT)/.chs_deps
 include $(AXI_VGA_ROOT)/axi_vga.mk
 $(AXI_VGA_ROOT)/.generated:
 	flock -x $@ $(MAKE) axi_vga && touch $@
